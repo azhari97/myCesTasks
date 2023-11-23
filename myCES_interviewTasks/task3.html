@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>To-Do List</title>
+  <!-- bootstrap CSS link -->
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <!-- link to Vue 3 package-->
+  <script src="https://unpkg.com/vue@next"></script>
+</head>
+
+<body>
+  <div id="app" class="container mt-4">
+    <h1 class="text-center mb-4">To-Do List</h1>
+    <div class="input-group mb-3">
+      <input v-model="newTask" type="text" class="form-control" placeholder="Enter task">
+      <div class="input-group-append">
+        <button @click="addTask" class="btn btn-primary">Add</button>
+      </div>
+    </div>
+
+    <h2>Current Tasks</h2>
+    <ul class="list-group">
+      <li v-for="(task, index) in currentTasks" :key="'current'+index" class="list-group-item d-flex justify-content-between align-items-center">
+        <span :class="{ completed: task.completed }">{{ task.description }}</span>
+        <div>
+          <button @click="deleteTask(index, 'current')" class="btn btn-danger mr-2">Delete</button>
+          <button @click="moveToCompleted(index)" class="btn btn-success">Done</button>
+        </div>
+      </li>
+    </ul>
+
+    <h2 class="mt-4">Completed Tasks</h2>
+    <ul class="list-group">
+      <li v-for="(task, index) in completedTasks" :key="'completed'+index" class="list-group-item d-flex justify-content-between align-items-center">
+        <span :class="{ completed: task.completed }">{{ task.description }}</span>
+        <div>
+          <button @click="deleteTask(index, 'completed')" class="btn btn-danger mr-2">Delete</button>
+          <button @click="moveToCurrent(index)" class="btn btn-warning">Undo</button>
+        </div>
+      </li>
+    </ul>
+  </div>
+
+  <script>
+    // Vue3 script 
+    const app = Vue.createApp({
+      data() {
+        return {
+          newTask: '',
+          currentTasks: [],
+          completedTasks: [],
+        };
+      },
+      methods: {
+        addTask() {
+          if (this.newTask.trim() !== '') {
+            this.currentTasks.push({ description: this.newTask, completed: false });
+            this.saveTasks();
+            this.newTask = '';
+          }
+        },
+        deleteTask(index, listType) {
+          if (listType === 'current') {
+            this.currentTasks.splice(index, 1);
+          } else {
+            this.completedTasks.splice(index, 1);
+          }
+          this.saveTasks();
+        },
+        moveToCompleted(index) {
+          const taskToMove = this.currentTasks.splice(index, 1)[0];
+          taskToMove.completed = true;
+          this.completedTasks.push(taskToMove);
+          this.saveTasks();
+        },
+        moveToCurrent(index) {
+          const taskToMove = this.completedTasks.splice(index, 1)[0];
+          taskToMove.completed = false;
+          this.currentTasks.push(taskToMove);
+          this.saveTasks();
+        },
+        saveTasks() {
+          localStorage.setItem('currentTasks', JSON.stringify(this.currentTasks));
+          localStorage.setItem('completedTasks', JSON.stringify(this.completedTasks));
+        },
+        loadTasks() {
+          const storedCurrentTasks = localStorage.getItem('currentTasks');
+          const storedCompletedTasks = localStorage.getItem('completedTasks');
+          if (storedCurrentTasks) {
+            this.currentTasks = JSON.parse(storedCurrentTasks);
+          }
+          if (storedCompletedTasks) {
+            this.completedTasks = JSON.parse(storedCompletedTasks);
+          }
+        },
+      },
+
+      created() {
+        this.loadTasks();
+      },
+    });
+
+    app.mount('#app');
+  </script>
+  
+  <style>
+    .completed {
+      text-decoration: line-through;
+    }
+    h2 {
+      margin-top: 20px;
+    }
+  </style>
+</body>
+
+</html>
